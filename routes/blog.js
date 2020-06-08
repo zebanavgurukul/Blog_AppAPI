@@ -45,8 +45,13 @@ blog.post('/login_sign',(req,res) => {
 });
 
 // 3
-blog.post('/update', (req,res) => {
-    var updata = {
+blog.post('/update/:ID', (req,res) => {
+    var ID = req.params.ID
+    blogDB.user_get(ID)
+    .then((data) => {
+    var user_ID = data[0]['ID']
+    var updata =  {
+        user_ID : user_ID,
         Title : req.body.Title,
         Content : req.body.Content,
         Author_Name : req.body.Author_Name,
@@ -61,11 +66,12 @@ blog.post('/update', (req,res) => {
     .catch((err)=>{
         console.log(err);
     })
-})
+    })
+});
 
 // 4
-blog.get('/getdata',(req,res) => {
-    blogDB.getdata()
+blog.get('/approve_articles',(req,res) => {
+    blogDB.articles()
     .then((data) => {
         var list = []
         for(var i = 0; i < data.length; i++){
@@ -74,7 +80,7 @@ blog.get('/getdata',(req,res) => {
             var Content = data[i]['Content']
             var Author_Name = data[i]['Author_Name']
             var Image = data[i]['Image']
-            var Date = data[i]['Date']
+            var Date1 = data[i]['Date']
             var Approved = data[i]['Approved']
             if (Approved == "Yes"){
                 var All_data = {
@@ -83,7 +89,8 @@ blog.get('/getdata',(req,res) => {
                     Content : Content,
                     Author_Name : Author_Name,
                     Image : Image,
-                    Date : Date,
+                    Date : Date1,
+                    updata_Date : new Date()
                 }
                 list.push(All_data)
                 console.log(list)
@@ -98,28 +105,30 @@ blog.get('/getdata',(req,res) => {
 // 5
 blog.get('/get/:ID', (req,res) => {
     var ID = req.params.ID
-    blogDB.Article_get()
+    blogDB.getdata(ID)
     .then((data) => {
-        for(i = 0; i < data.length; i++){
-            var Accessible_by_SuperAdmin = data[i]['Accessible_by_SuperAdmin']
-            if (Accessible_by_SuperAdmin == "True"){
-                var SuperAdmin = data[i]['SuperAdmin']
-                var Admin = data[i]['Admin']
-            }
+        var Approved = data[0]['Approved']
+        if (Approved == "Yes"){
+            var Author_Name = data[0]['Author_Name']
+            blogDB.Article_get()
+            .then((data) => {
+                for(i = 0; i < data.length; i++){
+                    var Accessible_by_SuperAdmin = data[i]['Accessible_by_SuperAdmin']
+                    if (Accessible_by_SuperAdmin == "True"){
+                        var SuperAdmin = data[i]['SuperAdmin']
+                        var Admin = data[i]['Admin']
+                    }
+                }
+                var order = {
+                    SuperAdmin : SuperAdmin,
+                    Admin : Admin,
+                    Author_Name : Author_Name
+                }
+                res.send(order)
+            })
         }
-        blogDB.getdata(ID)
-        .then((data) => {
-            var Approved = data[0]['Approved']
-            if (Approved == "Yes"){
-                var Author_Name = data[0]['Author_Name']
-            }
-        var order = {
-            SuperAdmin : SuperAdmin,
-            Admin : Admin,
-            Author_Name : Author_Name
+        else{ res.send('Approved Rejected')
         }
-        res.send(order)
-    })
     }).catch((err) => {
         res.send(err)
     })

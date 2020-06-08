@@ -24,6 +24,8 @@ knex.schema.hasTable('Article').then((exists) => {
     if (!exists) {
         return knex.schema.createTable('Article', (table) => {
             table.increments('ID')
+            table.integer("user_ID").unsigned()
+            table.foreign("user_ID").references("user.ID")
             table.string('Title')
             table.string('Content')
             table.string('Author_Name')
